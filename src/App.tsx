@@ -33,7 +33,7 @@ export const App: React.FC = () => {
 
   const [isProcessed, setIsProcessed] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [selectedId, setSeletedId] = useState<number | null>(null);
+  const [selectedId, setSeletedId] = useState<number[] | null>(null);
   const [editedTodoId, setEditedTodoId] = useState<number | null>(null);
 
   const [searchParams] = useSearchParams();
@@ -50,7 +50,7 @@ export const App: React.FC = () => {
   const deleteTodoHandler = useCallback(async (
     todoId: number,
   ) => {
-    setSeletedId(todoId);
+    setSeletedId([todoId]);
 
     try {
       await deleteTodo(todoId);
@@ -98,11 +98,11 @@ export const App: React.FC = () => {
   }, [title]);
 
   const toggleTodoHandler = async (todoId: number, check: boolean) => {
-    setSeletedId(todoId);
+    setSeletedId([todoId]);
 
     try {
       await toggleTodo(todoId, !check);
-      setTodos(todos.map(todo => (todo.id === todoId
+      setTodos(prevTodos => prevTodos.map(todo => (todo.id === todoId
         ? { ...todo, completed: !todo.completed }
         : todo
       )));
@@ -116,24 +116,30 @@ export const App: React.FC = () => {
   const toggleAllTodoHandler = async () => {
     const allCompleted = todos.every(todo => todo.completed);
     const completed = !allCompleted;
+    const ids = todos.map(todo => todo.id);
 
     setIsProcessed(true);
+    setSeletedId(ids);
 
     try {
       await Promise.all(
         todos.filter(todo => todo.completed !== completed)
           .map(async todo => toggleTodo(todo.id, completed)),
       );
-      setTodos(todos.map(todo => ({ ...todo, completed })));
+      setTodos(prevTodos => prevTodos.map(todo => ({ ...todo, completed })));
     } catch (innerError) {
       setError(TodoErrors.Update);
     } finally {
       setIsProcessed(false);
+      setSeletedId(null);
     }
   };
 
   const clearCompletedTodos = async () => {
     const completeTodos = todos.filter(todo => todo.completed);
+    const completedIds = completeTodos.map(todo => todo.id);
+
+    setSeletedId(completedIds);
 
     try {
       await Promise.all(completeTodos.map(async todo => {
@@ -143,6 +149,8 @@ export const App: React.FC = () => {
         .filter(filtrTodo => !filtrTodo.completed));
     } catch (innerError) {
       setError(TodoErrors.Delete);
+    } finally {
+      setSeletedId(null);
     }
   };
 
@@ -154,19 +162,19 @@ export const App: React.FC = () => {
     }
 
     event.preventDefault();
-    setSeletedId(editedTodoId);
+    setSeletedId([editedTodoId]);
 
     try {
       if (!newTitle.trim()) {
-        await deleteTodo(editedTodoId);
-        setTodos(filtredTodos => filtredTodos
-          .filter(todo => todo.id !== editedTodoId));
-      } else {
-        await changeTitle(editedTodoId, newTitle);
-        setTodos(innerTodos => innerTodos.map(todo => (todo.id === editedTodoId
-          ? { ...todo, title: newTitle }
-          : todo)));
+        setError(TodoErrors.Empty);
+
+        return;
       }
+
+      await changeTitle(editedTodoId, newTitle);
+      setTodos(innerTodos => innerTodos.map(todo => (todo.id === editedTodoId
+        ? { ...todo, title: newTitle }
+        : todo)));
 
       resetTodoData();
     } catch (innerError) {
@@ -277,14 +285,14 @@ export const App: React.FC = () => {
                 />
 
                 {todos.length !== 0
-                && (
-                  <TodoFilter
-                    status={status}
-                    itemsLeft={itemsLeft}
-                    itemsCompleted={itemsCompleted}
-                    clearCompletedTodos={clearCompletedTodos}
-                  />
-                )}
+                  && (
+                    <TodoFilter
+                      status={status}
+                      itemsLeft={itemsLeft}
+                      itemsCompleted={itemsCompleted}
+                      clearCompletedTodos={clearCompletedTodos}
+                    />
+                  )}
               </div>
             </>
           )

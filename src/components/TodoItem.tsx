@@ -4,7 +4,7 @@ import { Todo } from '../types/Todo';
 
 interface Props {
   todo: Todo
-  selectedId: number | null
+  selectedId: number [] | null
   editedTodoId: number | null
   newTitle: string
   onChangeTodoTitle: (
@@ -63,6 +63,7 @@ export const TodoItem: React.FC<Props> = ({
               }}
               onChange={(event) => onAddNewTitle(event.target.value)}
               onBlur={(event) => onChangeTodoTitle(event)}
+              autoFocus
             />
           </form>
         ) : (
@@ -88,7 +89,7 @@ export const TodoItem: React.FC<Props> = ({
         )}
 
       <div className={`modal overlay ${
-        id === 0 || selectedId === id
+        id === 0 || selectedId?.includes(id)
           ? 'is-active'
           : ''
       }`}

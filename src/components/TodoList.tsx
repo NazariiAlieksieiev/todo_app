@@ -7,7 +7,7 @@ import { TodoItem } from './TodoItem';
 interface Props {
   todos: Todo[],
   creating: Todo | null
-  selectedId: number | null
+  selectedId: number [] | null
   editedTodoId: number | null
   newTitle: string
   onChangeTodoTitle: (
