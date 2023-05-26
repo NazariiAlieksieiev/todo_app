@@ -54,7 +54,6 @@ export const TodoItem: React.FC<Props> = ({
             <input
               type="text"
               className="todo__title-field"
-              placeholder="Empty todo will be deleted"
               value={newTitle}
               onKeyUp={(event) => {
                 if (event.key === 'Escape') {
